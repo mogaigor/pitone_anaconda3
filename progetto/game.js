@@ -122,13 +122,15 @@ function gameOver() {
     // Aggiorna il miglior punteggio se il punteggio attuale è maggiore
     if (score > highScore) {
         highScore = score;
+        // Invia il nuovo miglior punteggio al server
+        sendScoreToServer(highScore);
     }
 
     // Visualizza il miglior punteggio
     document.getElementById('bestScore').textContent = 'Miglior punteggio: ' + highScore;
 
-    // Invia il punteggio al server quando il gioco termina
-    sendScoreToServer(score);
+    // Mostra il punteggio più alto
+    displayHighScore();
 }
 
 // Funzione per resettare il gioco
@@ -155,31 +157,20 @@ function sendScoreToServer(score) {
     .then(response => response.json())
     .then(data => {
         console.log('Score saved:', data);
-        getHighScores(); // Recupera e visualizza la classifica
+        getHighScore(); // Recupera e visualizza il miglior punteggio
     })
     .catch((error) => console.error('Error:', error));
 }
 
-// Funzione per ottenere i punteggi più alti dal server
-function getHighScores() {
-    fetch('http://localhost:5000/get_high_scores')
+// Funzione per ottenere il punteggio più alto dal server
+function displayHighScore() {
+    fetch('http://localhost:5000/get_high_score')
         .then(response => response.json())
         .then(data => {
-            displayHighScores(data);
+            const highScoreElement = document.getElementById('highScore');
+            highScoreElement.textContent = `Punteggio più alto: ${data.high_score}`;
         })
-        .catch((error) => console.error('Error:', error));
-}
-
-// Funzione per visualizzare i punteggi più alti
-function displayHighScores(scores) {
-    let highScoresList = document.getElementById('highScoresList');
-    highScoresList.innerHTML = ''; // Pulisce la lista precedente
-
-    scores.forEach((score, index) => {
-        let li = document.createElement('li');
-        li.textContent = `#${index + 1}: ${score.score} points`;
-        highScoresList.appendChild(li);
-    });
+        .catch((error) => console.error('Error fetching high score:', error));
 }
 
 // Funzione per aggiornare il gioco
@@ -198,6 +189,7 @@ function updateGame() {
 
 // Inizializza il gioco
 window.onload = function() {
+    getHighScore();  // Ottieni il miglior punteggio dal server
+    displayHighScore(); // Carica e mostra il punteggio più alto
     document.getElementById('startMessage').style.display = 'block'; // Mostra il messaggio di inizio
-    document.getElementById('bestScore').textContent = 'Miglior punteggio: ' + highScore;
 };

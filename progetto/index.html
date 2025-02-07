@@ -4,21 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flappy Bird</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #gameCanvas { border: 1px solid black; }
+        #startMessage, #gameOverMessage { display: none; }
+    </style>
 </head>
 <body>
-    <div id="gameContainer" style="text-align: center;">
-        <!-- Messaggio di inizio gioco -->
-        <p id="startMessage" style="font-size: 24px;">Premi SPAZIO per iniziare il gioco!</p>
+    <h1>Flappy Bird</h1>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <p id="startMessage">Premi spazio per iniziare</p>
+    <div id="gameOverMessage">
+        <h2>Game Over</h2>
+        <p id="bestScore">Miglior punteggio: 0</p>
+        <p>Premi R per ripartire</p>
+    </div>
 
-        <!-- Canvas del gioco -->
-        <canvas id="gameCanvas" width="600" height="400"></canvas>
-
-        <!-- Messaggio di game over -->
-        <p id="gameOverMessage" style="font-size: 24px; display: none;">Game Over! Premi R per riprovare.</p>
-
-        <!-- Lista dei punteggi più alti -->
-        <ul id="highScoresList" style="list-style-type: none; padding: 0;"></ul>
+    <div id="highScoreSection">
+        <h2>Punteggio più alto</h2>
+        <p id="highScore">Caricamento...</p>
     </div>
 
     <script src="game.js"></script>
