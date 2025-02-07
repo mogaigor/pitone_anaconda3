@@ -15,10 +15,18 @@ let isFlapping = false;
 let isGameOver = false;
 let pipes = [];
 let pipeWidth = 50;
-let gap = 200; // Distanza tra i tubi
+let gap = 200; // Distanza tra i tubi (iniziale)
 let score = 0;
 let highScore = 0;  // Nuova variabile per il miglior punteggio
 let isGameStarted = false;  // Variabile per controllare se il gioco è iniziato
+
+// Carica l'immagine dell'uccellino
+const birdImage = new Image();
+birdImage.src = 'uccello.png'; // Assicurati che l'immagine uccello.png sia nella stessa cartella del codice
+
+// Carica la gif "loser.gif"
+const loserGif = new Image();
+loserGif.src = 'loser.gif'; // Assicurati che la gif loser.gif sia nella stessa cartella del codice
 
 // Gestire il movimento dell'uccellino
 document.addEventListener('keydown', function (e) {
@@ -61,30 +69,36 @@ function updateBird() {
 function updatePipes() {
     if (isGameOver) return;
 
-    // Se l'array pipes è vuoto o il tubo precedente ha raggiunto una certa posizione
     if (pipes.length === 0 || pipes[pipes.length - 1].x <= canvas.width - SPAWN_RATE) {
-        let pipeHeight = Math.floor(Math.random() * (canvas.height - gap));
+        let previousPipe = pipes[pipes.length - 1];
+
+        let newTopHeight;
+        if (previousPipe) {
+            newTopHeight = Math.floor(previousPipe.top + (Math.random() * 60 - 30)); 
+            newTopHeight = Math.max(50, Math.min(newTopHeight, canvas.height - gap - 50)); 
+        } else {
+            newTopHeight = Math.floor(Math.random() * (canvas.height - gap - 100) + 50);
+        }
+
+        let newBottomHeight = newTopHeight + gap;
+
         pipes.push({
             x: canvas.width,
-            top: pipeHeight,
-            bottom: pipeHeight + gap
+            top: newTopHeight,
+            bottom: newBottomHeight
         });
     }
 
     for (let i = 0; i < pipes.length; i++) {
-        pipes[i].x -= 2; // Spostamento dei tubi
+        pipes[i].x -= 2; 
 
-        // Rimuove i tubi che sono usciti dallo schermo
         if (pipes[i].x + pipeWidth < 0) {
             pipes.splice(i, 1);
             score++;
         }
 
-        // Verifica la collisione
-        if (
-            pipes[i].x < 50 + birdWidth && pipes[i].x + pipeWidth > 50 // Se l'uccellino è vicino ai tubi orizzontalmente
-        ) {
-            if (birdY < pipes[i].top || birdY + birdHeight > pipes[i].bottom) { // Se l'uccellino è fuori dai limiti del buco
+        if (pipes[i].x < 50 + birdWidth && pipes[i].x + pipeWidth > 50) {
+            if (birdY < pipes[i].top || birdY + birdHeight > pipes[i].bottom) { 
                 gameOver();
             }
         }
@@ -93,8 +107,7 @@ function updatePipes() {
 
 // Funzione per disegnare l'uccellino
 function drawBird() {
-    ctx.fillStyle = 'yellow';
-    ctx.fillRect(50, birdY, birdWidth, birdHeight);
+    ctx.drawImage(birdImage, 50, birdY, birdWidth, birdHeight); 
 }
 
 // Funzione per disegnare i tubi
@@ -111,7 +124,7 @@ function drawScore() {
     ctx.fillStyle = 'black';
     ctx.font = '24px Arial';
     ctx.fillText('Score: ' + score, 10, 30);
-    ctx.fillText('Best Score: ' + highScore, canvas.width - 150, 30);  // Visualizza il miglior punteggio
+    ctx.fillText('Best Score: ' + highScore, canvas.width - 150, 30); 
 }
 
 // Funzione per gestire il Game Over
@@ -119,18 +132,21 @@ function gameOver() {
     isGameOver = true;
     document.getElementById('gameOverMessage').style.display = 'block';
     
-    // Aggiorna il miglior punteggio se il punteggio attuale è maggiore
     if (score > highScore) {
         highScore = score;
-        // Invia il nuovo miglior punteggio al server
         sendScoreToServer(highScore);
     }
 
-    // Visualizza il miglior punteggio
     document.getElementById('bestScore').textContent = 'Miglior punteggio: ' + highScore;
 
-    // Mostra il punteggio più alto
-    displayHighScore();
+    // Visualizza la gif di game over
+    drawLoserGif();
+}
+
+// Funzione per disegnare la gif di game over
+function drawLoserGif() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Pulisce il canvas
+    ctx.drawImage(loserGif, 0, 0, canvas.width, canvas.height); // Disegna la gif che occupa tutto il canvas
 }
 
 // Funzione per resettare il gioco
@@ -142,7 +158,7 @@ function restartGame() {
     isGameOver = false;
     isGameStarted = false;
     document.getElementById('gameOverMessage').style.display = 'none';
-    document.getElementById('startMessage').style.display = 'block'; // Mostra il messaggio di "Premi spazio per iniziare"
+    document.getElementById('startMessage').style.display = 'block'; 
 }
 
 // Funzione per inviare il punteggio al server
@@ -157,20 +173,9 @@ function sendScoreToServer(score) {
     .then(response => response.json())
     .then(data => {
         console.log('Score saved:', data);
-        getHighScore(); // Recupera e visualizza il miglior punteggio
+        getHighScore();
     })
     .catch((error) => console.error('Error:', error));
-}
-
-// Funzione per ottenere il punteggio più alto dal server
-function displayHighScore() {
-    fetch('http://localhost:5000/get_high_score')
-        .then(response => response.json())
-        .then(data => {
-            const highScoreElement = document.getElementById('highScore');
-            highScoreElement.textContent = `Punteggio più alto: ${data.high_score}`;
-        })
-        .catch((error) => console.error('Error fetching high score:', error));
 }
 
 // Funzione per aggiornare il gioco
@@ -189,7 +194,9 @@ function updateGame() {
 
 // Inizializza il gioco
 window.onload = function() {
-    getHighScore();  // Ottieni il miglior punteggio dal server
-    displayHighScore(); // Carica e mostra il punteggio più alto
-    document.getElementById('startMessage').style.display = 'block'; // Mostra il messaggio di inizio
+    birdImage.onload = function() {
+        getHighScore(); 
+        displayHighScore(); 
+        document.getElementById('startMessage').style.display = 'block';
+    };
 };
